@@ -1,0 +1,16 @@
+# "./post.fragment.graphql"
+
+query GetPosts($first: Int, $after: String) {
+  posts(first: $first, after: $after) {
+    edges {
+      node {
+        ...postAttributes
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}

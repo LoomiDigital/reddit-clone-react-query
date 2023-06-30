@@ -1,0 +1,15 @@
+fragment postAttributes on Post {
+  id
+  title
+  body
+  image
+  username
+  votes {
+    upvote
+    username
+    post_id
+  }
+  subreddit_id
+  subreddit_topic
+  created_at
+}

@@ -1,0 +1,7 @@
+mutation DeleteVote($id: ID!) {
+  deleteVote(id: $id) {
+    id
+    post_id
+    username
+  }
+}

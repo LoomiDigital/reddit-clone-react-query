@@ -1,0 +1,5 @@
+fragment subredditAttributes on Subreddit {
+  id
+  topic
+  created_at
+}

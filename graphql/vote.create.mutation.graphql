@@ -1,0 +1,7 @@
+mutation AddVote($post_id: ID!, $upvote: Boolean!, $username: String!) {
+  addVote(post_id: $post_id, upvote: $upvote, username: $username) {
+    post_id
+    username
+    upvote
+  }
+}

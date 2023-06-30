@@ -1,0 +1,9 @@
+mutation AddComment($text: String!, $post_id: ID!, $username: String!) {
+  addComment(text: $text, post_id: $post_id, username: $username) {
+    id
+    text
+    post_id
+    created_at
+    username
+  }
+}

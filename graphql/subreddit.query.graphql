@@ -1,0 +1,7 @@
+#import "./subreddit.fragment.graphql"
+
+query GetSubredditByTopic($topic: String!) {
+  getSubredditByTopic(topic: $topic) {
+    ...subredditAttributes
+  }
+}

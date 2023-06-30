@@ -1,0 +1,16 @@
+# "./post.fragment.graphql"
+
+query GetPostsByTopic($first: Int, $after: String, $topic: String!) {
+  postsByTopic(first: $first, after: $after, topic: $topic) {
+    edges {
+      node {
+        ...postAttributes
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}

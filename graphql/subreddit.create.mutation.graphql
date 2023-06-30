@@ -1,0 +1,7 @@
+#import "./subreddit.fragment.graphql"
+
+mutation AddSubreddit($topic: String!) {
+  insertSubreddit(topic: $topic) {
+    ...subredditAttributes
+  }
+}

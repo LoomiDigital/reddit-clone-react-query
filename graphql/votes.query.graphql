@@ -1,0 +1,7 @@
+query GetVotesByPostId($post_id: ID!) {
+  getVotesByPostId(post_id: $post_id) {
+    post_id
+    username
+    upvote
+  }
+}
