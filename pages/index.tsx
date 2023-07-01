@@ -1,4 +1,3 @@
-import { use, useCallback } from "react";
 import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
 import client from "@d20/react-query/client";
@@ -14,12 +13,12 @@ import {
   dehydrate,
   useInfiniteQuery,
 } from "@tanstack/react-query";
-import Feed from "@d20/components/Feed";
+
 // import { newPostIncoming } from "@d20/reactivities/posts";
 
 // import PostBox from "@d20/Components/Postbox";
-// import Feed from "@d20/Components/Feed";
-// import { PostLoader } from "@d20/Components/Loaders";
+import Feed from "@d20/components/Feed";
+import { PostLoader } from "@d20/components/Loaders";
 
 const Home: NextPage = () => {
   const { data, isLoading, fetchNextPage, hasNextPage } = useInfiniteQuery(
@@ -40,23 +39,17 @@ const Home: NextPage = () => {
     }
   );
 
-  const posts = data?.pages?.map((page) => page.posts?.edges).flat() ?? [];
-
-  console.log("posts", posts);
-  // const hasNextPage: boolean = data?.posts?.pageInfo?.hasNextPage!;
-
-  // console.log("hasNextPage", hasNextPage);
-  // console.log("isLoading", isLoading);
+  const posts = data?.pages?.map((page) => page.posts?.edges!).flat();
 
   const handleLoadMore = () => {
     hasNextPage && fetchNextPage();
   };
 
-  // const [sentryRef] = useInfiniteScroll({
-  //   hasNextPage,
-  //   isLoading,
-  //   onLoadMore: handleLoadMore,
-  // });
+  const [sentryRef] = useInfiniteScroll({
+    hasNextPage: hasNextPage as boolean,
+    loading: isLoading,
+    onLoadMore: handleLoadMore,
+  });
 
   return (
     <div className="mx-auto my-7 max-w-5xl">
@@ -66,16 +59,14 @@ const Home: NextPage = () => {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <h1>React Clone: React Query</h1>
       {/* <PostBox />
       {newPostIncoming() && <PostLoader length={1} />}
       */}
-      <button onClick={handleLoadMore}>Load More</button>
 
       <Feed
         posts={posts}
-        // loading={loading || hasNextPage}
-        // loadingRef={sentryRef}
+        loading={isLoading || (hasNextPage as boolean)}
+        loadingRef={sentryRef}
       />
     </div>
   );

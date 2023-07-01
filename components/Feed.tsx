@@ -1,7 +1,7 @@
 import React from "react";
 import { PostEdge } from "@d20/generated/graphql";
 
-// import { PostLoader } from "./Loaders";
+import { PostLoader } from "./Loaders";
 import PostCard from "./PostCard";
 
 type Props = {
@@ -20,11 +20,11 @@ function Feed({ loading, loadingRef, posts }: Props) {
           </div>
         );
       })}
-      {/* {loading && (
+      {loading && (
         <div ref={loadingRef} className="flex flex-col">
           <PostLoader length={1} />
         </div>
-      )} */}
+      )}
     </div>
   );
 }
