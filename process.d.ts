@@ -6,5 +6,6 @@ declare namespace NodeJS {
     NEXT_PUBLIC_STEPZEN_API_URL: string;
     REDDIT_CLIENT_SECRET: string;
     REDDIT_CLIENT_ID: string;
+    REVALIDATE_SECRET_TOKEN: string;
   }
 }

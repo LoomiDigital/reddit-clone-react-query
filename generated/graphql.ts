@@ -633,7 +633,7 @@ export type GetVotesByPostIdQueryVariables = Exact<{
 
 export type GetVotesByPostIdQuery = { __typename?: 'Query', getVotesByPostId?: Array<{ __typename?: 'Vote', post_id: number, username: string, upvote: boolean } | null> | null };
 
-export const PostAttributesFragmentDoc = `
+export const PostAttributesFragmentDoc = /*#__PURE__*/ `
     fragment postAttributes on Post {
   id
   title
@@ -650,14 +650,14 @@ export const PostAttributesFragmentDoc = `
   created_at
 }
     `;
-export const SubredditAttributesFragmentDoc = `
+export const SubredditAttributesFragmentDoc = /*#__PURE__*/ `
     fragment subredditAttributes on Subreddit {
   id
   topic
   created_at
 }
     `;
-export const AddCommentDocument = `
+export const AddCommentDocument = /*#__PURE__*/ `
     mutation AddComment($text: String!, $post_id: ID!, $username: String!) {
   addComment(text: $text, post_id: $post_id, username: $username) {
     id
@@ -681,7 +681,8 @@ export const useAddCommentMutation = <
       (variables?: AddCommentMutationVariables) => fetcher<AddCommentMutation, AddCommentMutationVariables>(client, AddCommentDocument, variables, headers)(),
       options
     );
-export const GetCommentsByPostIdDocument = `
+useAddCommentMutation.fetcher = (client: GraphQLClient, variables: AddCommentMutationVariables, headers?: RequestInit['headers']) => fetcher<AddCommentMutation, AddCommentMutationVariables>(client, AddCommentDocument, variables, headers);
+export const GetCommentsByPostIdDocument = /*#__PURE__*/ `
     query GetCommentsByPostId($post_id: ID!) {
   commentsByPostId(post_id: $post_id) {
     id
@@ -706,7 +707,12 @@ export const useGetCommentsByPostIdQuery = <
       fetcher<GetCommentsByPostIdQuery, GetCommentsByPostIdQueryVariables>(client, GetCommentsByPostIdDocument, variables, headers),
       options
     );
-export const AddPostDocument = `
+
+useGetCommentsByPostIdQuery.getKey = (variables: GetCommentsByPostIdQueryVariables) => ['GetCommentsByPostId', variables];
+;
+
+useGetCommentsByPostIdQuery.fetcher = (client: GraphQLClient, variables: GetCommentsByPostIdQueryVariables, headers?: RequestInit['headers']) => fetcher<GetCommentsByPostIdQuery, GetCommentsByPostIdQueryVariables>(client, GetCommentsByPostIdDocument, variables, headers);
+export const AddPostDocument = /*#__PURE__*/ `
     mutation AddPost($title: String!, $body: String!, $image: String!, $username: String!, $subreddit_id: ID!, $subreddit_topic: String!) {
   insertPost(
     title: $title
@@ -733,7 +739,8 @@ export const useAddPostMutation = <
       (variables?: AddPostMutationVariables) => fetcher<AddPostMutation, AddPostMutationVariables>(client, AddPostDocument, variables, headers)(),
       options
     );
-export const GetPostDocument = `
+useAddPostMutation.fetcher = (client: GraphQLClient, variables: AddPostMutationVariables, headers?: RequestInit['headers']) => fetcher<AddPostMutation, AddPostMutationVariables>(client, AddPostDocument, variables, headers);
+export const GetPostDocument = /*#__PURE__*/ `
     query GetPost($id: ID!) {
   getPost(id: $id) {
     ...postAttributes
@@ -754,7 +761,12 @@ export const useGetPostQuery = <
       fetcher<GetPostQuery, GetPostQueryVariables>(client, GetPostDocument, variables, headers),
       options
     );
-export const GetPostsDocument = `
+
+useGetPostQuery.getKey = (variables: GetPostQueryVariables) => ['GetPost', variables];
+;
+
+useGetPostQuery.fetcher = (client: GraphQLClient, variables: GetPostQueryVariables, headers?: RequestInit['headers']) => fetcher<GetPostQuery, GetPostQueryVariables>(client, GetPostDocument, variables, headers);
+export const GetPostsDocument = /*#__PURE__*/ `
     query GetPosts($first: Int, $after: String) {
   posts(first: $first, after: $after) {
     edges {
@@ -784,7 +796,12 @@ export const useGetPostsQuery = <
       fetcher<GetPostsQuery, GetPostsQueryVariables>(client, GetPostsDocument, variables, headers),
       options
     );
-export const GetPostsByTopicDocument = `
+
+useGetPostsQuery.getKey = (variables?: GetPostsQueryVariables) => variables === undefined ? ['GetPosts'] : ['GetPosts', variables];
+;
+
+useGetPostsQuery.fetcher = (client: GraphQLClient, variables?: GetPostsQueryVariables, headers?: RequestInit['headers']) => fetcher<GetPostsQuery, GetPostsQueryVariables>(client, GetPostsDocument, variables, headers);
+export const GetPostsByTopicDocument = /*#__PURE__*/ `
     query GetPostsByTopic($first: Int, $after: String, $topic: String!) {
   postsByTopic(first: $first, after: $after, topic: $topic) {
     edges {
@@ -814,7 +831,12 @@ export const useGetPostsByTopicQuery = <
       fetcher<GetPostsByTopicQuery, GetPostsByTopicQueryVariables>(client, GetPostsByTopicDocument, variables, headers),
       options
     );
-export const AddSubredditDocument = `
+
+useGetPostsByTopicQuery.getKey = (variables: GetPostsByTopicQueryVariables) => ['GetPostsByTopic', variables];
+;
+
+useGetPostsByTopicQuery.fetcher = (client: GraphQLClient, variables: GetPostsByTopicQueryVariables, headers?: RequestInit['headers']) => fetcher<GetPostsByTopicQuery, GetPostsByTopicQueryVariables>(client, GetPostsByTopicDocument, variables, headers);
+export const AddSubredditDocument = /*#__PURE__*/ `
     mutation AddSubreddit($topic: String!) {
   insertSubreddit(topic: $topic) {
     ...subredditAttributes
@@ -834,7 +856,8 @@ export const useAddSubredditMutation = <
       (variables?: AddSubredditMutationVariables) => fetcher<AddSubredditMutation, AddSubredditMutationVariables>(client, AddSubredditDocument, variables, headers)(),
       options
     );
-export const GetSubredditByTopicDocument = `
+useAddSubredditMutation.fetcher = (client: GraphQLClient, variables: AddSubredditMutationVariables, headers?: RequestInit['headers']) => fetcher<AddSubredditMutation, AddSubredditMutationVariables>(client, AddSubredditDocument, variables, headers);
+export const GetSubredditByTopicDocument = /*#__PURE__*/ `
     query GetSubredditByTopic($topic: String!) {
   getSubredditByTopic(topic: $topic) {
     ...subredditAttributes
@@ -855,7 +878,12 @@ export const useGetSubredditByTopicQuery = <
       fetcher<GetSubredditByTopicQuery, GetSubredditByTopicQueryVariables>(client, GetSubredditByTopicDocument, variables, headers),
       options
     );
-export const AddVoteDocument = `
+
+useGetSubredditByTopicQuery.getKey = (variables: GetSubredditByTopicQueryVariables) => ['GetSubredditByTopic', variables];
+;
+
+useGetSubredditByTopicQuery.fetcher = (client: GraphQLClient, variables: GetSubredditByTopicQueryVariables, headers?: RequestInit['headers']) => fetcher<GetSubredditByTopicQuery, GetSubredditByTopicQueryVariables>(client, GetSubredditByTopicDocument, variables, headers);
+export const AddVoteDocument = /*#__PURE__*/ `
     mutation AddVote($post_id: ID!, $upvote: Boolean!, $username: String!) {
   addVote(post_id: $post_id, upvote: $upvote, username: $username) {
     post_id
@@ -877,7 +905,8 @@ export const useAddVoteMutation = <
       (variables?: AddVoteMutationVariables) => fetcher<AddVoteMutation, AddVoteMutationVariables>(client, AddVoteDocument, variables, headers)(),
       options
     );
-export const DeleteVoteDocument = `
+useAddVoteMutation.fetcher = (client: GraphQLClient, variables: AddVoteMutationVariables, headers?: RequestInit['headers']) => fetcher<AddVoteMutation, AddVoteMutationVariables>(client, AddVoteDocument, variables, headers);
+export const DeleteVoteDocument = /*#__PURE__*/ `
     mutation DeleteVote($id: ID!) {
   deleteVote(id: $id) {
     id
@@ -899,7 +928,8 @@ export const useDeleteVoteMutation = <
       (variables?: DeleteVoteMutationVariables) => fetcher<DeleteVoteMutation, DeleteVoteMutationVariables>(client, DeleteVoteDocument, variables, headers)(),
       options
     );
-export const UpdateVoteDocument = `
+useDeleteVoteMutation.fetcher = (client: GraphQLClient, variables: DeleteVoteMutationVariables, headers?: RequestInit['headers']) => fetcher<DeleteVoteMutation, DeleteVoteMutationVariables>(client, DeleteVoteDocument, variables, headers);
+export const UpdateVoteDocument = /*#__PURE__*/ `
     mutation UpdateVote($post_id: ID!, $username: String!, $upvote: Boolean!) {
   updateVote(post_id: $post_id, username: $username, upvote: $upvote) {
     id
@@ -921,7 +951,8 @@ export const useUpdateVoteMutation = <
       (variables?: UpdateVoteMutationVariables) => fetcher<UpdateVoteMutation, UpdateVoteMutationVariables>(client, UpdateVoteDocument, variables, headers)(),
       options
     );
-export const GetVotesByPostIdDocument = `
+useUpdateVoteMutation.fetcher = (client: GraphQLClient, variables: UpdateVoteMutationVariables, headers?: RequestInit['headers']) => fetcher<UpdateVoteMutation, UpdateVoteMutationVariables>(client, UpdateVoteDocument, variables, headers);
+export const GetVotesByPostIdDocument = /*#__PURE__*/ `
     query GetVotesByPostId($post_id: ID!) {
   getVotesByPostId(post_id: $post_id) {
     post_id
@@ -944,3 +975,8 @@ export const useGetVotesByPostIdQuery = <
       fetcher<GetVotesByPostIdQuery, GetVotesByPostIdQueryVariables>(client, GetVotesByPostIdDocument, variables, headers),
       options
     );
+
+useGetVotesByPostIdQuery.getKey = (variables: GetVotesByPostIdQueryVariables) => ['GetVotesByPostId', variables];
+;
+
+useGetVotesByPostIdQuery.fetcher = (client: GraphQLClient, variables: GetVotesByPostIdQueryVariables, headers?: RequestInit['headers']) => fetcher<GetVotesByPostIdQuery, GetVotesByPostIdQueryVariables>(client, GetVotesByPostIdDocument, variables, headers);
