@@ -6,12 +6,16 @@ import useInfiniteScroll from "react-infinite-scroll-hook";
 import {
   GetPostsDocument,
   GetPostsQuery,
+  PostConnection,
+  PostEdge,
   useGetPostsQuery,
 } from "@d20/generated/graphql";
 import {
   QueryClient,
   dehydrate,
+  hydrate,
   useInfiniteQuery,
+  useQuery,
 } from "@tanstack/react-query";
 
 // import { newPostIncoming } from "@d20/reactivities/posts";
@@ -19,30 +23,39 @@ import {
 // import PostBox from "@d20/Components/Postbox";
 import Feed from "@d20/components/Feed";
 import { PostLoader } from "@d20/components/Loaders";
+import { useState } from "react";
 
-const Home: NextPage = () => {
-  const { data, isLoading, fetchNextPage, hasNextPage } = useInfiniteQuery(
-    useGetPostsQuery.getKey(),
-    ({ pageParam = undefined }) => {
-      return client.request<GetPostsQuery>(GetPostsDocument, {
+type Props = {
+  posts: PostConnection;
+};
+
+const Home: NextPage<Props> = (props) => {
+  const [posts, setPosts] = useState<PostConnection>(props.posts);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadItems = () => {
+    client
+      .request<GetPostsQuery>(GetPostsDocument, {
         first: 4,
-        after: pageParam,
+        after: posts.pageInfo.endCursor,
+      })
+      .then((data) => {
+        setPosts((prev: PostConnection) => ({
+          ...prev,
+          edges: [
+            ...prev.edges,
+            ...data?.posts?.edges!,
+          ] as PostConnection["edges"],
+          pageInfo: data?.posts?.pageInfo as PostConnection["pageInfo"],
+        }));
+        setIsLoading(false);
       });
-    },
-    {
-      getNextPageParam: (lastPage) => {
-        if (lastPage?.posts?.pageInfo.hasNextPage) {
-          return lastPage?.posts?.pageInfo.endCursor;
-        }
-        return undefined;
-      },
-    }
-  );
+  };
 
-  const posts = data?.pages?.map((page) => page.posts?.edges!).flat();
+  const hasNextPage = posts.pageInfo.hasNextPage;
 
-  const handleLoadMore = () => {
-    hasNextPage && fetchNextPage();
+  const handleLoadMore = async () => {
+    hasNextPage && loadItems();
   };
 
   const [sentryRef] = useInfiniteScroll({
@@ -64,7 +77,7 @@ const Home: NextPage = () => {
       */}
 
       <Feed
-        posts={posts}
+        posts={posts.edges}
         loading={isLoading || (hasNextPage as boolean)}
         loadingRef={sentryRef}
       />
@@ -75,7 +88,7 @@ const Home: NextPage = () => {
 export const getServerSideProps: GetServerSideProps = async () => {
   const queryClient = new QueryClient();
 
-  await queryClient.fetchQuery(
+  await queryClient.prefetchQuery(
     useGetPostsQuery.getKey(),
     useGetPostsQuery.fetcher(client, { first: 4 })
   );
@@ -83,6 +96,8 @@ export const getServerSideProps: GetServerSideProps = async () => {
   return {
     props: {
       dehydratedState: JSON.parse(JSON.stringify(dehydrate(queryClient))),
+      posts: queryClient.getQueryData<GetPostsQuery>(useGetPostsQuery.getKey())
+        ?.posts,
     },
   };
 };
