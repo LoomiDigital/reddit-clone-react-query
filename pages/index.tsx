@@ -33,23 +33,22 @@ const Home: NextPage<Props> = (props) => {
   const [posts, setPosts] = useState<PostConnection>(props.posts);
   const [isLoading, setIsLoading] = useState(false);
 
-  const loadItems = () => {
-    client
-      .request<GetPostsQuery>(GetPostsDocument, {
-        first: 4,
-        after: posts.pageInfo.endCursor,
-      })
-      .then((data) => {
-        setPosts((prev: PostConnection) => ({
-          ...prev,
-          edges: [
-            ...prev.edges,
-            ...data?.posts?.edges!,
-          ] as PostConnection["edges"],
-          pageInfo: data?.posts?.pageInfo as PostConnection["pageInfo"],
-        }));
-        setIsLoading(false);
-      });
+  const loadItems = async () => {
+    const data = await client.request<GetPostsQuery>(GetPostsDocument, {
+      first: 4,
+      after: posts?.pageInfo?.endCursor,
+    });
+
+    setPosts((prev: PostConnection) => ({
+      ...prev,
+      edges: [...prev.edges, ...data?.posts?.edges!],
+      pageInfo: {
+        ...prev.pageInfo,
+        ...data?.posts?.pageInfo!,
+      },
+    }));
+
+    setIsLoading(false);
   };
 
   const hasNextPage = posts.pageInfo.hasNextPage;
