@@ -31,7 +31,7 @@ type Props = {
 
 const Home: NextPage<Props> = (props) => {
   const [posts, setPosts] = useState<PostConnection>(props.posts);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const loadItems = async () => {
     const data = await client.request<GetPostsQuery>(GetPostsDocument, {
