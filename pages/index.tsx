@@ -7,15 +7,13 @@ import {
   GetPostsDocument,
   GetPostsQuery,
   PostConnection,
-  PostEdge,
   useGetPostsQuery,
 } from "@d20/generated/graphql";
 import {
   QueryClient,
   dehydrate,
-  hydrate,
-  useInfiniteQuery,
   useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
 
 // import { newPostIncoming } from "@d20/reactivities/posts";
@@ -23,15 +21,16 @@ import {
 // import PostBox from "@d20/Components/Postbox";
 import Feed from "@d20/components/Feed";
 import { PostLoader } from "@d20/components/Loaders";
-import { useState } from "react";
+import { use, useState } from "react";
+import Postbox from "@d20/components/Postbox";
 
 type Props = {
   posts: PostConnection;
 };
 
-const Home: NextPage<Props> = (props) => {
-  const [posts, setPosts] = useState<PostConnection>(props.posts);
+const Home: NextPage<Props> = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const queryClient = useQueryClient();
 
   const loadItems = async () => {
     const data = await client.request<GetPostsQuery>(GetPostsDocument, {
@@ -39,19 +38,26 @@ const Home: NextPage<Props> = (props) => {
       after: posts?.pageInfo?.endCursor,
     });
 
-    setPosts((prev: PostConnection) => ({
-      ...prev,
-      edges: [...prev.edges, ...data?.posts?.edges!],
-      pageInfo: {
-        ...prev.pageInfo,
-        ...data?.posts?.pageInfo!,
+    queryClient.setQueryData<GetPostsQuery>(useGetPostsQuery.getKey(), {
+      posts: {
+        edges: [...posts?.edges!, ...data?.posts?.edges!],
+        pageInfo: {
+          ...posts?.pageInfo,
+          ...data?.posts?.pageInfo!,
+        },
       },
-    }));
+    });
 
     setIsLoading(false);
   };
 
-  const hasNextPage = posts.pageInfo.hasNextPage;
+  const { data } = useQuery<GetPostsQuery>(
+    useGetPostsQuery.getKey(),
+    useGetPostsQuery.fetcher(client, { first: 4 })
+  );
+
+  const posts = data?.posts;
+  const hasNextPage = posts?.pageInfo.hasNextPage;
 
   const handleLoadMore = async () => {
     hasNextPage && loadItems();
@@ -71,12 +77,13 @@ const Home: NextPage<Props> = (props) => {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      {/* <PostBox />
+      <Postbox />
+      {/* 
       {newPostIncoming() && <PostLoader length={1} />}
       */}
 
       <Feed
-        posts={posts.edges}
+        posts={posts?.edges}
         loading={isLoading || (hasNextPage as boolean)}
         loadingRef={sentryRef}
       />
@@ -95,8 +102,6 @@ export const getServerSideProps: GetServerSideProps = async () => {
   return {
     props: {
       dehydratedState: JSON.parse(JSON.stringify(dehydrate(queryClient))),
-      posts: queryClient.getQueryData<GetPostsQuery>(useGetPostsQuery.getKey())
-        ?.posts,
     },
   };
 };
