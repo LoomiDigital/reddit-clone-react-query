@@ -95,21 +95,21 @@ function Postbox({ subreddit }: Props) {
         },
         {
           onSuccess: ({ insertPost }) => {
-            queryClient.setQueryData(
+            queryClient.setQueryData<GetPostQuery | unknown>(
               useGetPostsQuery.getKey(),
-              ({ posts }: any) => {
+              (old: { posts: PostConnection }) => {
                 return {
                   posts: {
                     edges: [
                       {
                         node: insertPost!,
                       },
-                      ...posts?.edges!,
-                    ] as PostConnection["edges"],
+                      ...old?.posts?.edges!,
+                    ],
                     pageInfo: {
-                      endCursor: posts?.pageInfo?.endCursor!,
-                      hasNextPage: posts?.pageInfo?.hasNextPage!,
-                    } as PostConnection["pageInfo"],
+                      endCursor: old?.posts?.pageInfo?.endCursor!,
+                      hasNextPage: old?.posts?.pageInfo?.hasNextPage!,
+                    },
                   },
                 };
               }
