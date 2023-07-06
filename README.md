@@ -24,7 +24,7 @@ Demo will be available soon.
 
 - [Next.js](https://nextjs.org/)
 - [TypeScript](https://www.typescriptlang.org/)
-- [React Query](https://tanstack.com/)
+- [React Query](https://tanstack.com/query/latest)
 - [NextAuth.js](https://next-auth.js.org/providers/github)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [Jest](https://jestjs.io/)
