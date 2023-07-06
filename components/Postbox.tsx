@@ -10,6 +10,7 @@ import {
   AddPostMutation,
   AddSubredditMutation,
   GetPostQuery,
+  GetPostsQuery,
   GetSubredditByTopicDocument,
   GetSubredditByTopicQuery,
   PostAttributesFragmentDoc,
@@ -44,7 +45,50 @@ function Postbox({ subreddit }: Props) {
   const { mutateAsync: addSubreddit } =
     useAddSubredditMutation<AddSubredditMutation>(client);
 
-  const { mutateAsync: addPost } = useAddPostMutation<AddPostMutation>(client);
+  const { mutateAsync: addPost } = useAddPostMutation<AddPostMutation>(client, {
+    onMutate: async (post) => {
+      await queryClient.cancelQueries(useGetPostsQuery.getKey());
+
+      const previousPosts = queryClient.getQueryData<GetPostsQuery>(
+        useGetPostsQuery.getKey()
+      );
+
+      queryClient.setQueryData<GetPostsQuery | undefined>(
+        useGetPostsQuery.getKey(),
+        (old) => ({
+          posts: {
+            edges: [
+              {
+                node: {
+                  ...post,
+                  id: -1,
+                  created_at: new Date().toISOString(),
+                },
+              },
+              ...old?.posts?.edges!,
+            ],
+            pageInfo: {
+              endCursor: old?.posts?.pageInfo?.endCursor!,
+              hasNextPage: old?.posts?.pageInfo?.hasNextPage!,
+            },
+          },
+        })
+      );
+
+      return previousPosts;
+    },
+    onError: (_err, _variables, context) => {
+      const { posts } = context as GetPostsQuery;
+
+      queryClient.setQueryData<GetPostsQuery | unknown>(
+        useGetPostsQuery.getKey(),
+        posts
+      );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(useGetPostsQuery.getKey());
+    },
+  });
 
   const {
     register,
@@ -87,36 +131,11 @@ function Postbox({ subreddit }: Props) {
         newSubreddit = insertSubreddit;
       }
 
-      await addPost(
-        {
-          ...postFields,
-          subreddit_id: newSubreddit?.id || subredditExists?.id!,
-          subreddit_topic: newSubreddit?.topic || subredditExists?.topic!,
-        },
-        {
-          onSuccess: ({ insertPost }) => {
-            queryClient.setQueryData<GetPostQuery | unknown>(
-              useGetPostsQuery.getKey(),
-              (old: { posts: PostConnection }) => {
-                return {
-                  posts: {
-                    edges: [
-                      {
-                        node: insertPost!,
-                      },
-                      ...old?.posts?.edges!,
-                    ],
-                    pageInfo: {
-                      endCursor: old?.posts?.pageInfo?.endCursor!,
-                      hasNextPage: old?.posts?.pageInfo?.hasNextPage!,
-                    },
-                  },
-                };
-              }
-            );
-          },
-        }
-      );
+      await addPost({
+        ...postFields,
+        subreddit_id: newSubreddit?.id || subredditExists?.id!,
+        subreddit_topic: newSubreddit?.topic || subredditExists?.topic!,
+      });
 
       // addPost({
       //   variables: {
