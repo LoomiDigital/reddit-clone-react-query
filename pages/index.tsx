@@ -33,25 +33,31 @@ const Home: NextPage<Props> = () => {
   const queryClient = useQueryClient();
 
   const loadItems = async () => {
-    const data = await client.request<GetPostsQuery>(GetPostsDocument, {
-      first: 4,
-      after: posts?.pageInfo?.endCursor,
-    });
+    const data = await client.request<GetPostsQuery | undefined>(
+      GetPostsDocument,
+      {
+        first: 4,
+        after: posts?.pageInfo?.endCursor,
+      }
+    );
 
-    queryClient.setQueryData<GetPostsQuery>(useGetPostsQuery.getKey(), {
-      posts: {
-        edges: [...posts?.edges!, ...data?.posts?.edges!],
-        pageInfo: {
-          ...posts?.pageInfo,
-          ...data?.posts?.pageInfo!,
+    queryClient.setQueryData<GetPostsQuery | undefined>(
+      useGetPostsQuery.getKey(),
+      {
+        posts: {
+          edges: [...posts?.edges!, ...data?.posts?.edges!],
+          pageInfo: {
+            ...posts?.pageInfo,
+            ...data?.posts?.pageInfo!,
+          },
         },
-      },
-    });
+      }
+    );
 
     setIsLoading(false);
   };
 
-  const { data } = useQuery<GetPostsQuery>(
+  const { data } = useQuery<GetPostsQuery | undefined>(
     useGetPostsQuery.getKey(),
     useGetPostsQuery.fetcher(client, { first: 4 })
   );
@@ -94,7 +100,7 @@ const Home: NextPage<Props> = () => {
 export const getServerSideProps: GetServerSideProps = async () => {
   const queryClient = new QueryClient();
 
-  await queryClient.prefetchQuery(
+  await queryClient.prefetchQuery<GetPostsQuery | undefined>(
     useGetPostsQuery.getKey(),
     useGetPostsQuery.fetcher(client, { first: 4 })
   );
