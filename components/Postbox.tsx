@@ -1,31 +1,25 @@
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import client from "@d20/react-query/client";
-import { toast } from "react-hot-toast";
 // import { newPostIncoming } from "@d20/reactivities/posts";
 
+import { toast } from "react-hot-toast";
 import { LinkIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import {
   AddPostMutation,
   AddSubredditMutation,
-  GetPostQuery,
   GetPostsQuery,
   GetSubredditByTopicDocument,
   GetSubredditByTopicQuery,
-  PostAttributesFragmentDoc,
-  PostConnection,
-  PostEdge,
-  Subreddit,
   useAddPostMutation,
   useAddSubredditMutation,
   useAddVoteMutation,
   useGetPostsQuery,
-  useGetSubredditByTopicQuery,
 } from "@d20/generated/graphql";
 
 import Avatar from "./Avatar";
-import { useQueryClient } from "@tanstack/react-query";
 
 type Props = {
   subreddit?: string;
@@ -45,6 +39,8 @@ function Postbox({ subreddit }: Props) {
   const { mutateAsync: addSubreddit } =
     useAddSubredditMutation<AddSubredditMutation>(client);
 
+  const { mutateAsync: addVote } = useAddVoteMutation(client);
+
   const { mutateAsync: addPost } = useAddPostMutation<AddPostMutation>(client, {
     onMutate: async (post) => {
       await queryClient.cancelQueries(useGetPostsQuery.getKey());
@@ -62,6 +58,15 @@ function Postbox({ subreddit }: Props) {
                 node: {
                   ...post,
                   id: -1,
+                  votes: [
+                    {
+                      __typename: "Vote",
+                      id: -1,
+                      post_id: -1,
+                      username: session?.user?.name!,
+                      upvote: true,
+                    },
+                  ],
                   created_at: new Date().toISOString(),
                 },
               },
@@ -84,6 +89,13 @@ function Postbox({ subreddit }: Props) {
         useGetPostsQuery.getKey(),
         posts
       );
+    },
+    onSuccess: (data) => {
+      addVote({
+        post_id: data?.insertPost?.id!,
+        username: session?.user?.name!,
+        upvote: true,
+      });
     },
     onSettled: () => {
       queryClient.invalidateQueries(useGetPostsQuery.getKey());
@@ -136,79 +148,6 @@ function Postbox({ subreddit }: Props) {
         subreddit_id: newSubreddit?.id || subredditExists?.id!,
         subreddit_topic: newSubreddit?.topic || subredditExists?.topic!,
       });
-
-      // addPost({
-      //   variables: {
-      //     ...postFields,
-      //     subreddit_id: newSubreddit?.id || subredditExists?.id!,
-      //     subreddit_topic: newSubreddit?.topic || subredditExists?.topic!,
-      //   },
-      //   optimisticResponse(vars) {
-      //     return {
-      //       insertPost: {
-      //         __typename: "Post",
-      //         id: -1,
-      //         title: vars.title,
-      //         body: vars.body,
-      //         image: vars.image,
-      //         username: vars.username,
-      //         votes: [],
-      //         subreddit_id: -1,
-      //         subreddit_topic: vars.subreddit_topic,
-      //         created_at: new Date().toISOString(),
-      //       },
-      //     };
-      //   },
-      //   update: async (cache, { data: addPostData }) => {
-      //     const fieldName = subreddit ? "postsByTopic" : "posts";
-
-      //     cache.modify({
-      //       fields: {
-      //         [fieldName](existingPosts = {}) {
-      //           const newPostRef = cache.writeFragment({
-      //             data: {
-      //               ...addPostData?.insertPost!,
-      //               votes: [
-      //                 {
-      //                   __typename: "Vote",
-      //                   id: -1,
-      //                   post_id: addPostData?.insertPost?.id!,
-      //                   username: session?.user.name!,
-      //                   upvote: true,
-      //                 },
-      //               ],
-      //             },
-      //             fragment: PostAttributesFragmentDoc,
-      //             fragmentName: "postAttributes",
-      //           });
-
-      //           return {
-      //             ...existingPosts,
-      //             edges: [
-      //               {
-      //                 __typename: "PostEdge",
-      //                 node: newPostRef,
-      //                 cursor: addPostData?.insertPost?.id!,
-      //               },
-      //               ...existingPosts.edges,
-      //             ],
-      //           };
-      //         },
-      //       },
-      //     });
-      //   },
-      //   onCompleted: async (data) => {
-      //     addVote({
-      //       variables: {
-      //         post_id: data?.insertPost?.id!,
-      //         username: session?.user.name!,
-      //         upvote: true,
-      //       },
-      //     });
-
-      //     newPostIncoming(false);
-      //   },
-      // });
 
       setValue("postTitle", "");
       setValue("postBody", "");
