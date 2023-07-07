@@ -1,8 +1,10 @@
 import React, { SyntheticEvent, useEffect, useState } from "react";
 import Router from "next/router";
+import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import TimeAgo from "react-timeago";
+
+import client from "@d20/react-query/client";
 import {
   GetPostDocument,
   PostAttributesFragment,
@@ -20,6 +22,8 @@ import {
   GiftIcon,
   ShareIcon,
 } from "@heroicons/react/24/outline";
+
+import TimeAgo from "react-timeago";
 import Avatar from "./Avatar";
 
 interface Props {
@@ -28,6 +32,17 @@ interface Props {
 
 function PostCard({ post }: Props) {
   const { data: session } = useSession();
+  const { data: commentsData, isLoading } = useQuery(
+    useGetCommentsByPostIdQuery.getKey({
+      post_id: post.id,
+    }),
+    useGetCommentsByPostIdQuery.fetcher(client, {
+      post_id: post.id,
+    })
+  );
+
+  const comments = commentsData?.commentsByPostId;
+
   // const { data: commentsData, loading } = useGetCommentsByPostIdQuery({
   //   variables: {
   //     post_id: post.id,
@@ -135,8 +150,6 @@ function PostCard({ post }: Props) {
     Router.push(href);
   };
 
-  // const comments = commentsData?.commentsByPostId;
-
   return (
     <Link passHref href={`/post/${post.id}`}>
       <div className="flex cursor-pointer rounded-md border border-gray-300 bg-white shadow-sm hover:border hover:border-gray-600">
@@ -192,7 +205,7 @@ function PostCard({ post }: Props) {
           <div className="flex space-x-4 text-gray-400 ">
             <div className="postButtons">
               <ChatBubbleOvalLeftEllipsisIcon className="h-6 w-6" />
-              {/* <p>{loading ? 0 : comments?.length} Comments</p> */}
+              <p>{isLoading ? 0 : comments?.length} Comments</p>
             </div>
             <div className="postButtons">
               <GiftIcon className="h-6 w-6" />
