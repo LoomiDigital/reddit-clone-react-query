@@ -1,11 +1,20 @@
+import { useEffect, useState } from "react";
 import { GetServerSideProps } from "next";
 import { useSearchParams } from "next/navigation";
-import { use, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
+
 import client from "@d20/react-query/client";
 import {
-  GetPostDocument,
+  QueryClient,
+  dehydrate,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+
+import {
+  AddCommentMutation,
+  GetCommentsByPostIdQuery,
   GetPostQuery,
   PostAttributesFragment,
   useAddCommentMutation,
@@ -14,20 +23,10 @@ import {
 } from "@d20/generated/graphql";
 
 import { toast } from "react-hot-toast";
+import { CommentLoader } from "@d20/components/Loaders";
 
-// import { CommentLoader } from "@d20/components/Loaders";
 import PostCard from "@d20/components/PostCard";
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
-
-// import CommentCard from "@d20/components/CommentCard";
-
-type Params = {
-  postId: string;
-};
-
-type Props = {
-  post: PostAttributesFragment;
-};
+import CommentCard from "@d20/components/CommentCard";
 
 type FormData = {
   comment: string;
@@ -36,15 +35,19 @@ type FormData = {
 function PostPage() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const postId = parseInt(searchParams.get("postId") as string);
 
-  // const { data: commentsData, loading } = useGetCommentsByPostIdQuery({
-  //   variables: {
-  //     post_id: post.id,
-  //   },
-  // });
+  const { data: commentsData } = useQuery(
+    useGetCommentsByPostIdQuery.getKey({
+      post_id: postId,
+    }),
+    useGetCommentsByPostIdQuery.fetcher(client, {
+      post_id: postId,
+    })
+  );
 
-  const { data } = useQuery<GetPostQuery | undefined>(
+  const { data: postData, isLoading } = useQuery<GetPostQuery | undefined>(
     useGetPostQuery.getKey({
       id: postId,
     }),
@@ -52,10 +55,66 @@ function PostPage() {
       id: postId,
     })
   );
-  const post: PostAttributesFragment = data?.getPost!;
+
+  const { mutateAsync: addComment } = useAddCommentMutation<AddCommentMutation>(
+    client,
+    {
+      onMutate: async (comment) => {
+        await queryClient.cancelQueries(
+          useGetCommentsByPostIdQuery.getKey({
+            post_id: postId,
+          })
+        );
+
+        const previousComments =
+          queryClient.getQueryData<GetCommentsByPostIdQuery>(
+            useGetCommentsByPostIdQuery.getKey({
+              post_id: postId,
+            })
+          );
+
+        queryClient.setQueryData<GetCommentsByPostIdQuery | undefined>(
+          useGetCommentsByPostIdQuery.getKey({
+            post_id: postId,
+          }),
+          (old) => ({
+            commentsByPostId: [
+              {
+                ...comment,
+                id: -1,
+                created_at: new Date().toISOString(),
+              },
+              ...old?.commentsByPostId!,
+            ],
+          })
+        );
+
+        return previousComments;
+      },
+      onError: (_err, _variables, context) => {
+        const { commentsByPostId } = context as GetCommentsByPostIdQuery;
+
+        queryClient.setQueryData<GetCommentsByPostIdQuery | unknown>(
+          useGetCommentsByPostIdQuery.getKey({
+            post_id: postId,
+          }),
+          commentsByPostId
+        );
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries(
+          useGetCommentsByPostIdQuery.getKey({
+            post_id: postId,
+          })
+        );
+      },
+    }
+  );
+
+  const post: PostAttributesFragment = postData?.getPost!;
 
   const [isSubmitSuccessful, setIsSubmitSuccessful] = useState<boolean>(false);
-  // const [addComment] = useAddCommentMutation();
+
   const {
     register,
     handleSubmit,
@@ -70,46 +129,25 @@ function PostPage() {
     }
   }, [isSubmitSuccessful, reset]);
 
-  // const comments = commentsData?.commentsByPostId;
+  const comments = commentsData?.commentsByPostId;
 
-  // const submitComment = handleSubmit(async (formData) => {
-  //   const notification = toast.loading("Adding comment...");
+  const submitComment = handleSubmit(async (formData) => {
+    const notification = toast.loading("Adding comment...");
 
-  //   addComment({
-  //     variables: {
-  //       post_id: post.id,
-  //       text: formData.comment,
-  //       username: session?.user?.name!,
-  //     },
-  //     optimisticResponse(vars) {
-  //       return {
-  //         addComment: {
-  //           __typename: "Comment",
-  //           id: -1,
-  //           post_id: post.id,
-  //           text: vars.text,
-  //           username: vars.username,
-  //           created_at: new Date().toISOString(),
-  //         },
-  //       };
-  //     },
-  //     update: async (cache, { data }) => {
-  //       const comment = await data?.addComment;
-
-  //       cache.modify({
-  //         fields: {
-  //           commentsByPostId() {
-  //             return [comment!, ...comments!];
-  //           },
-  //         },
-  //       });
-
-  //       setIsSubmitSuccessful(true);
-
-  //       toast.success("Comment added!", { id: notification });
-  //     },
-  //   });
-  // });
+    addComment(
+      {
+        post_id: post.id,
+        text: formData.comment,
+        username: session?.user?.name!,
+      },
+      {
+        onSuccess: () => {
+          setIsSubmitSuccessful(true);
+          toast.success("Comment added!", { id: notification });
+        },
+      }
+    );
+  });
 
   return (
     <div className="mx-auto my-7 max-w-5xl">
@@ -119,7 +157,7 @@ function PostPage() {
           Comments as{" "}
           <span className="text-red-500">{session?.user?.name}</span>
         </p>
-        {/* <form onSubmit={submitComment} className="flex flex-col space-y-2">
+        <form onSubmit={submitComment} className="flex flex-col space-y-2">
           <textarea
             disabled={!session}
             {...register("comment", { required: true })}
@@ -136,18 +174,18 @@ function PostPage() {
           >
             Comment
           </button>
-        </form> */}
+        </form>
       </div>
-      {/* <div className="rounded-b-md border border-t-0 border-gray-300 bg-white px-10 py-5">
+      <div className="rounded-b-md border border-t-0 border-gray-300 bg-white px-10 py-5">
         <hr className="py-2" />
-        {loading ? (
-          <CommentLoader length={10} />
+        {isLoading ? (
+          <CommentLoader length={1} />
         ) : (
           comments?.map((comment) => (
             <CommentCard key={comment?.id} comment={comment!} />
           ))
         )}
-      </div> */}
+      </div>
     </div>
   );
 }
