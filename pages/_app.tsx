@@ -1,7 +1,8 @@
 import "@d20/styles/globals.css";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
 import { useState } from "react";
 import type { AppProps } from "next/app";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { SessionProvider } from "next-auth/react";
 
 import {
@@ -13,7 +14,16 @@ import {
 import Header from "@d20/components/Header";
 
 export default function App({ Component, pageProps }: AppProps) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 1000 * 60 * 2,
+          },
+        },
+      })
+  );
 
   return (
     <QueryClientProvider client={queryClient}>
