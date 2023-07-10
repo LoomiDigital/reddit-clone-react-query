@@ -1,8 +1,9 @@
+import { useState } from "react";
 import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
-import client from "@d20/react-query/client";
 import useInfiniteScroll from "react-infinite-scroll-hook";
 
+import client from "@d20/react-query/client";
 import {
   GetPostsDocument,
   GetPostsQuery,
@@ -18,10 +19,8 @@ import {
 
 // import { newPostIncoming } from "@d20/reactivities/posts";
 
-// import PostBox from "@d20/Components/Postbox";
 import Feed from "@d20/components/Feed";
 import { PostLoader } from "@d20/components/Loaders";
-import { use, useState } from "react";
 import Postbox from "@d20/components/Postbox";
 
 type Props = {
