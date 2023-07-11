@@ -5,20 +5,23 @@ import { useQueryClient } from "@tanstack/react-query";
 import client from "@d20/react-query/client";
 // import { newPostIncoming } from "@d20/reactivities/posts";
 
-import { toast } from "react-hot-toast";
-import { LinkIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import {
   AddPostMutation,
   AddSubredditMutation,
+  AddVoteMutation,
+  GetPostsByTopicQuery,
   GetPostsQuery,
   GetSubredditByTopicDocument,
   GetSubredditByTopicQuery,
   useAddPostMutation,
   useAddSubredditMutation,
   useAddVoteMutation,
+  useGetPostsByTopicQuery,
   useGetPostsQuery,
 } from "@d20/generated/graphql";
 
+import { toast } from "react-hot-toast";
+import { LinkIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import Avatar from "./Avatar";
 
 type Props = {
@@ -36,23 +39,34 @@ function Postbox({ subreddit }: Props) {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
 
+  const getPosts = subreddit
+    ? useGetPostsByTopicQuery.getKey({
+        topic: subreddit,
+      })
+    : useGetPostsQuery.getKey();
+
   const { mutateAsync: addSubreddit } =
     useAddSubredditMutation<AddSubredditMutation>(client);
 
-  const { mutateAsync: addVote } = useAddVoteMutation(client);
+  const { mutateAsync: addVote } = useAddVoteMutation<AddVoteMutation>(client);
 
   const { mutateAsync: addPost } = useAddPostMutation<AddPostMutation>(client, {
     onMutate: async (post) => {
-      await queryClient.cancelQueries(useGetPostsQuery.getKey());
+      const getPostsQuery = subreddit ? "postsByTopic" : "posts";
 
-      const previousPosts = queryClient.getQueryData<GetPostsQuery>(
-        useGetPostsQuery.getKey()
-      );
+      await queryClient.cancelQueries(getPosts);
 
-      queryClient.setQueryData<GetPostsQuery | undefined>(
-        useGetPostsQuery.getKey(),
-        (old) => ({
-          posts: {
+      const previousPosts = queryClient.getQueryData<
+        GetPostsQuery & GetPostsByTopicQuery
+      >(getPosts);
+
+      queryClient.setQueryData<
+        (GetPostsQuery & GetPostsByTopicQuery) | undefined
+      >(getPosts, (old) => {
+        const oldPosts = subreddit ? old?.postsByTopic! : old?.posts!;
+
+        return {
+          [getPostsQuery]: {
             edges: [
               {
                 node: {
@@ -70,25 +84,24 @@ function Postbox({ subreddit }: Props) {
                   created_at: new Date().toISOString(),
                 },
               },
-              ...old?.posts?.edges!,
+              ...oldPosts.edges!,
             ],
             pageInfo: {
-              endCursor: old?.posts?.pageInfo?.endCursor!,
-              hasNextPage: old?.posts?.pageInfo?.hasNextPage!,
+              endCursor: oldPosts.pageInfo?.endCursor,
+              hasNextPage: oldPosts.pageInfo?.hasNextPage!,
             },
           },
-        })
-      );
+        };
+      });
 
       return previousPosts;
     },
     onError: (_err, _variables, context) => {
-      const { posts } = context as GetPostsQuery;
+      const { posts } = context as GetPostsQuery & GetPostsByTopicQuery;
 
-      queryClient.setQueryData<GetPostsQuery | unknown>(
-        useGetPostsQuery.getKey(),
-        posts
-      );
+      queryClient.setQueryData<
+        (GetPostsQuery & GetPostsByTopicQuery) | unknown
+      >(getPosts, posts);
     },
     onSuccess: (data) => {
       addVote({
@@ -98,7 +111,7 @@ function Postbox({ subreddit }: Props) {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries(useGetPostsQuery.getKey());
+      queryClient.invalidateQueries(getPosts);
     },
   });
 
