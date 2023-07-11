@@ -31,6 +31,14 @@ const Home: NextPage<Props> = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
+  const { data } = useQuery<GetPostsQuery | undefined>(
+    useGetPostsQuery.getKey(),
+    useGetPostsQuery.fetcher(client, { first: 4 })
+  );
+
+  const posts = data?.posts;
+  const hasNextPage: boolean = posts?.pageInfo?.hasNextPage!;
+
   const loadItems = async () => {
     const data = await client.request<GetPostsQuery | undefined>(
       GetPostsDocument,
@@ -56,20 +64,12 @@ const Home: NextPage<Props> = () => {
     setIsLoading(false);
   };
 
-  const { data } = useQuery<GetPostsQuery | undefined>(
-    useGetPostsQuery.getKey(),
-    useGetPostsQuery.fetcher(client, { first: 4 })
-  );
-
-  const posts = data?.posts;
-  const hasNextPage = posts?.pageInfo.hasNextPage;
-
   const handleLoadMore = async () => {
     hasNextPage && loadItems();
   };
 
   const [sentryRef] = useInfiniteScroll({
-    hasNextPage: hasNextPage as boolean,
+    hasNextPage,
     loading: isLoading,
     onLoadMore: handleLoadMore,
   });

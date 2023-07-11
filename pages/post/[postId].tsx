@@ -36,7 +36,7 @@ function PostPage() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const postId = parseInt(searchParams.get("postId") as string);
+  const postId = parseInt(searchParams.get("postId")!);
 
   const { data: commentsData } = useQuery(
     useGetCommentsByPostIdQuery.getKey({
