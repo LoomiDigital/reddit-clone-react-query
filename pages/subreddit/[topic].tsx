@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { GetServerSideProps, NextPage } from "next";
+import { useSearchParams } from "next/navigation";
 import useInfiniteScroll from "react-infinite-scroll-hook";
 
 import client from "@d20/react-query/client";
@@ -17,8 +19,6 @@ import {
 import Avatar from "@d20/components/Avatar";
 import Postbox from "@d20/components/Postbox";
 import Feed from "@d20/components/Feed";
-import { useState } from "react";
-import { useSearchParams } from "next/navigation";
 
 const Subreddit: NextPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
