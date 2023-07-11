@@ -12,6 +12,7 @@ import {
 } from "@tanstack/react-query";
 
 import Header from "@d20/components/Header";
+import { Toaster } from "react-hot-toast";
 
 export default function App({ Component, pageProps }: AppProps) {
   const [queryClient] = useState(
@@ -29,6 +30,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <QueryClientProvider client={queryClient}>
       <Hydrate state={pageProps.dehydratedState}>
         <SessionProvider session={pageProps.session}>
+          <Toaster />
           <div className="h-screen overflow-y-scroll bg-slate-200">
             <Header />
             <Component {...pageProps} />
