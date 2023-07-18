@@ -3,59 +3,34 @@ import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
 import useInfiniteScroll from "react-infinite-scroll-hook";
 
+import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
 import client from "@d20/react-query/client";
-import {
-  GetPostsDocument,
-  GetPostsQuery,
-  PostConnection,
-  useGetPostsQuery,
-} from "@d20/generated/graphql";
-import {
-  QueryClient,
-  dehydrate,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
 
-// import { newPostIncoming } from "@d20/reactivities/posts";
+import { GetPostsQuery, useGetPostsQuery } from "@d20/generated/graphql";
+import { useGetPosts } from "@d20/hooks/useGetPosts";
 
 import Feed from "@d20/components/Feed";
-import { PostLoader } from "@d20/components/Loaders";
 import Postbox from "@d20/components/Postbox";
 
-type Props = {
-  posts: PostConnection;
-};
-
-const Home: NextPage<Props> = () => {
+const Home: NextPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
-  const { data } = useQuery<GetPostsQuery | undefined>(
-    useGetPostsQuery.getKey(),
-    useGetPostsQuery.fetcher(client, { first: 4 })
-  );
+  const { posts, fetchMore } = useGetPosts(4);
 
-  const posts = data?.posts;
   const hasNextPage: boolean = posts?.pageInfo?.hasNextPage!;
 
   const loadItems = async () => {
-    const data = await client.request<GetPostsQuery | undefined>(
-      GetPostsDocument,
-      {
-        first: 4,
-        after: posts?.pageInfo?.endCursor,
-      }
-    );
+    const { fetchedPosts } = await fetchMore(4, posts?.pageInfo?.endCursor);
 
     queryClient.setQueryData<GetPostsQuery | undefined>(
       useGetPostsQuery.getKey(),
       {
         posts: {
-          edges: [...posts?.edges!, ...data?.posts?.edges!],
+          edges: [...posts?.edges!, ...fetchedPosts?.edges!],
           pageInfo: {
-            ...posts?.pageInfo,
-            ...data?.posts?.pageInfo!,
+            ...fetchedPosts?.pageInfo,
+            ...fetchedPosts?.pageInfo!,
           },
         },
       }
@@ -83,15 +58,14 @@ const Home: NextPage<Props> = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Postbox />
-      {/* 
-      {newPostIncoming() && <PostLoader length={1} />}
-      */}
 
-      <Feed
-        posts={posts?.edges}
-        loading={isLoading || (hasNextPage as boolean)}
-        loadingRef={sentryRef}
-      />
+      {posts?.edges && (
+        <Feed
+          posts={posts?.edges}
+          loading={isLoading || (hasNextPage as boolean)}
+          loadingRef={sentryRef}
+        />
+      )}
     </div>
   );
 };
