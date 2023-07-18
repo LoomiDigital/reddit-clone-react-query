@@ -16,12 +16,17 @@ const Home: NextPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
-  const { posts, fetchMore } = useGetPosts(4);
+  const NUMBER_OF_POSTS = 4;
+
+  const { posts, fetchMore } = useGetPosts(NUMBER_OF_POSTS);
 
   const hasNextPage: boolean = posts?.pageInfo?.hasNextPage!;
 
   const loadItems = async () => {
-    const { fetchedPosts } = await fetchMore(4, posts?.pageInfo?.endCursor);
+    const { fetchedPosts } = await fetchMore(
+      NUMBER_OF_POSTS,
+      posts?.pageInfo?.endCursor
+    );
 
     queryClient.setQueryData<GetPostsQuery | undefined>(
       useGetPostsQuery.getKey(),
