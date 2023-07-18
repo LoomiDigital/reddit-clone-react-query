@@ -64,7 +64,7 @@ const Home: NextPage = () => {
       </Head>
       <Postbox />
 
-      {posts?.edges && (
+      {posts?.edges.length && (
         <Feed
           posts={posts?.edges}
           loading={isLoading || (hasNextPage as boolean)}
