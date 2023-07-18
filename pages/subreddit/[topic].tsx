@@ -4,17 +4,15 @@ import { useSearchParams } from "next/navigation";
 import useInfiniteScroll from "react-infinite-scroll-hook";
 
 import client from "@d20/react-query/client";
+
 import {
-  GetPostsByTopicDocument,
   GetPostsByTopicQuery,
   useGetPostsByTopicQuery,
 } from "@d20/generated/graphql";
-import {
-  QueryClient,
-  dehydrate,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+
+import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
+
+import { useGetPosts } from "@d20/hooks/useGetPosts";
 
 import Avatar from "@d20/components/Avatar";
 import Postbox from "@d20/components/Postbox";
@@ -26,28 +24,17 @@ const Subreddit: NextPage = () => {
   const searchParams = useSearchParams();
 
   const topic: string = searchParams.get("topic")!;
+  const NUMBER_OF_POSTS = 4;
 
-  const { data } = useQuery<GetPostsByTopicQuery | undefined>(
-    useGetPostsByTopicQuery.getKey({
-      topic,
-    }),
-    useGetPostsByTopicQuery.fetcher(client, {
-      first: 4,
-      topic,
-    })
-  );
+  const { posts, fetchMore } = useGetPosts(NUMBER_OF_POSTS, topic);
 
-  const posts = data?.postsByTopic;
-  const hasNextPage: boolean = data?.postsByTopic?.pageInfo?.hasNextPage!;
+  const hasNextPage: boolean = posts?.pageInfo?.hasNextPage!;
 
   const loadItems = async () => {
-    const data = await client.request<GetPostsByTopicQuery | undefined>(
-      GetPostsByTopicDocument,
-      {
-        first: 4,
-        after: posts?.pageInfo?.endCursor,
-        topic,
-      }
+    const { fetchedPosts } = await fetchMore(
+      NUMBER_OF_POSTS,
+      posts?.pageInfo?.endCursor,
+      topic
     );
 
     queryClient.setQueryData<GetPostsByTopicQuery | undefined>(
@@ -56,10 +43,10 @@ const Subreddit: NextPage = () => {
       }),
       {
         postsByTopic: {
-          edges: [...posts?.edges!, ...data?.postsByTopic?.edges!],
+          edges: [...posts?.edges!, ...fetchedPosts?.edges!],
           pageInfo: {
             ...posts?.pageInfo,
-            ...data?.postsByTopic?.pageInfo!,
+            ...fetchedPosts?.pageInfo!,
           },
         },
       }
@@ -95,11 +82,14 @@ const Subreddit: NextPage = () => {
       </div>
       <div className="mx-auto mt-5 max-w-5xl pb-10">
         <Postbox subreddit={topic} />
-        <Feed
-          posts={posts?.edges}
-          loading={isLoading || hasNextPage}
-          loadingRef={sentryRef}
-        />
+
+        {posts.edges?.length && (
+          <Feed
+            posts={posts?.edges}
+            loading={isLoading || hasNextPage}
+            loadingRef={sentryRef}
+          />
+        )}
       </div>
     </div>
   );
