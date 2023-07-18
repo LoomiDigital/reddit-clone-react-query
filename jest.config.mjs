@@ -11,7 +11,8 @@ const config = {
   // Add more setup options before each test is run
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
   moduleNameMapper: {
-    "^@d20/Components/(.*)$": "<rootDir>/Components/$1",
+    "^@d20/components/(.*)$": "<rootDir>/components/$1",
+    "^@d20/hooks/(.*)$": "<rootDir>/hooks/$1",
   },
   testEnvironment: "jest-environment-jsdom",
   coveragePathIgnorePatterns: [

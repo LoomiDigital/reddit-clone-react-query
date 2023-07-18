@@ -14,7 +14,7 @@ import PostPage from "@d20/pages/post/[postId]";
 import PostCard from "@d20/components/PostCard";
 import { CommentLoader } from "@d20/components/Loaders";
 
-jest.mock("../components/Loaders", () => ({
+jest.mock("@d20/components/Loaders", () => ({
   CommentLoader: jest.fn(),
 }));
 
@@ -25,11 +25,11 @@ jest.mock("next/navigation", () => ({
   }),
 }));
 
-jest.mock("../hooks/useGetPost");
-jest.mock("../hooks/useGetComments");
-jest.mock("../hooks/useAddComment");
+jest.mock("@d20/hooks/useGetPost");
+jest.mock("@d20/hooks/useGetComments");
+jest.mock("@d20/hooks/useAddComment");
 
-jest.mock("../components/PostCard");
+jest.mock("@d20/components/PostCard");
 
 const mockGetPost = useGetPost as jest.MockedFunction<typeof useGetPost>;
 

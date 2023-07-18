@@ -6,8 +6,8 @@ import Feed from "@d20/components/Feed";
 import PostCard from "@d20/components/PostCard";
 import { PostLoader } from "@d20/components/Loaders";
 
-jest.mock("@d20/Components/PostCard");
-jest.mock("@d20/Components/Loaders", () => ({
+jest.mock("@d20/components/PostCard");
+jest.mock("@d20/components/Loaders", () => ({
   PostLoader: jest.fn(),
 }));
 
