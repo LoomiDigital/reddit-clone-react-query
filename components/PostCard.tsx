@@ -1,15 +1,12 @@
-import React, { SyntheticEvent, useEffect, useState } from "react";
+import { SyntheticEvent, useEffect, useState } from "react";
 import Router from "next/router";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
-import { useQuery } from "@tanstack/react-query";
-import client from "@d20/react-query/client";
-import {
-  PostAttributesFragment,
-  useGetCommentsByPostIdQuery,
-  useUpdateVoteMutation,
-} from "@d20/generated/graphql";
+import { PostAttributesFragment, Vote } from "@d20/generated/graphql";
+
+import { useGetComments } from "@d20/hooks/useGetComments";
+import { useAddVote } from "@d20/hooks/useAddVote";
 
 import {
   ArrowDownIcon,
@@ -29,56 +26,18 @@ interface Props {
 }
 
 function PostCard({ post }: Props) {
-  const [vote, setVote] = useState<boolean | null>();
-  const [displayVotes, setDisplayVotes] = useState<number>(0);
   const [hasMounted, setHasMounted] = useState<boolean>(false);
 
   const { data: session } = useSession();
-  const { data: commentsData, isLoading } = useQuery(
-    useGetCommentsByPostIdQuery.getKey({
-      post_id: post.id,
-    }),
-    useGetCommentsByPostIdQuery.fetcher(client, {
-      post_id: post.id,
-    })
+
+  const { commentsData, isLoading } = useGetComments(post.id);
+
+  const { updateVote, displayVotes, vote } = useAddVote(
+    post?.votes as [Vote],
+    session?.user?.name!
   );
 
-  const { mutateAsync: updateVote } = useUpdateVoteMutation(client, {
-    onMutate: async (data) => {
-      const isUpvote = data?.upvote;
-      const updatedUpvotes = isUpvote ? displayVotes + 2 : displayVotes - 2;
-
-      setDisplayVotes(updatedUpvotes);
-      setVote(isUpvote);
-    },
-    onError: () => {
-      const isUpvote = !!vote;
-      const updatedUpvotes = isUpvote ? displayVotes - 2 : displayVotes + 2;
-
-      setDisplayVotes(updatedUpvotes);
-      setVote(!isUpvote);
-    },
-  });
-
   const comments = commentsData?.commentsByPostId;
-  const votes = post?.votes;
-
-  useEffect(() => {
-    const userVote = votes?.find(
-      (vote) => vote?.username === session?.user?.name
-    )?.upvote;
-
-    setVote(userVote);
-  }, [votes, session]);
-
-  useEffect(() => {
-    const totalVotes = votes?.reduce(
-      (total, vote) => (vote?.upvote ? ++total : --total),
-      0
-    );
-
-    setDisplayVotes(totalVotes!);
-  }, [votes]);
 
   useEffect(() => {
     setHasMounted(true);
