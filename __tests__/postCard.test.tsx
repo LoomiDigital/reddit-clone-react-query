@@ -21,10 +21,8 @@ const mockUseGetComments = useGetComments as jest.MockedFunction<
 
 const mockUseAddVote = useAddVote as jest.MockedFunction<typeof useAddVote>;
 
-const mockUpdateVote = jest.fn();
-
 const mockVoteResponse = {
-  updateVote: mockUpdateVote,
+  updateVote: jest.fn(),
   displayVotes: 1,
   vote: true,
 };
