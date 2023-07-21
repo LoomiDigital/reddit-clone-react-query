@@ -1,26 +1,17 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
-import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+
 import client from "@d20/react-query/client";
-// import { newPostIncoming } from "@d20/reactivities/posts";
 
 import {
-  AddPostMutation,
-  AddSubredditMutation,
-  AddVoteMutation,
-  GetPostsByTopicQuery,
-  GetPostsQuery,
   GetSubredditByTopicDocument,
   GetSubredditByTopicQuery,
-  useAddPostMutation,
-  useAddSubredditMutation,
-  useAddVoteMutation,
-  useGetPostsByTopicQuery,
-  useGetPostsQuery,
 } from "@d20/generated/graphql";
 
-import { toast } from "react-hot-toast";
+import { useAddPost } from "@d20/hooks/useAddPost";
+
 import { LinkIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import Avatar from "./Avatar";
 
@@ -37,83 +28,8 @@ type FormData = {
 
 function Postbox({ subreddit }: Props) {
   const { data: session } = useSession();
-  const queryClient = useQueryClient();
-
-  const getPosts = subreddit
-    ? useGetPostsByTopicQuery.getKey({
-        topic: subreddit,
-      })
-    : useGetPostsQuery.getKey();
-
-  const { mutateAsync: addSubreddit } =
-    useAddSubredditMutation<AddSubredditMutation>(client);
-
-  const { mutateAsync: addVote } = useAddVoteMutation<AddVoteMutation>(client);
-
-  const { mutateAsync: addPost } = useAddPostMutation<AddPostMutation>(client, {
-    onMutate: async (post) => {
-      const getPostsQuery = subreddit ? "postsByTopic" : "posts";
-
-      await queryClient.cancelQueries(getPosts);
-
-      const previousPosts = queryClient.getQueryData<
-        GetPostsQuery & GetPostsByTopicQuery
-      >(getPosts);
-
-      queryClient.setQueryData<
-        (GetPostsQuery & GetPostsByTopicQuery) | undefined
-      >(getPosts, (old) => {
-        const oldPosts = subreddit ? old?.postsByTopic! : old?.posts!;
-
-        return {
-          [getPostsQuery]: {
-            edges: [
-              {
-                node: {
-                  ...post,
-                  id: -1,
-                  votes: [
-                    {
-                      __typename: "Vote",
-                      id: -1,
-                      post_id: -1,
-                      username: session?.user?.name!,
-                      upvote: true,
-                    },
-                  ],
-                  created_at: new Date().toISOString(),
-                },
-              },
-              ...oldPosts.edges!,
-            ],
-            pageInfo: {
-              endCursor: oldPosts.pageInfo?.endCursor,
-              hasNextPage: oldPosts.pageInfo?.hasNextPage!,
-            },
-          },
-        };
-      });
-
-      return previousPosts;
-    },
-    onError: (_err, _variables, context) => {
-      const { posts } = context as GetPostsQuery & GetPostsByTopicQuery;
-
-      queryClient.setQueryData<
-        (GetPostsQuery & GetPostsByTopicQuery) | unknown
-      >(getPosts, posts);
-    },
-    onSuccess: (data) => {
-      addVote({
-        post_id: data?.insertPost?.id!,
-        username: session?.user?.name!,
-        upvote: true,
-      });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries(getPosts);
-    },
-  });
+  const [imageBoxOpen, setImageBoxOpen] = useState<boolean>(false);
+  const { addPost, addSubreddit } = useAddPost(subreddit);
 
   const {
     register,
@@ -122,14 +38,11 @@ function Postbox({ subreddit }: Props) {
     watch,
     formState: { errors },
   } = useForm<FormData>();
-  const [imageBoxOpen, setImageBoxOpen] = useState<boolean>(false);
 
   const submitPost = handleSubmit(async (formData) => {
     const notification = toast.loading("Creating post...");
 
     try {
-      // newPostIncoming(true);
-
       const data = await client.request<GetSubredditByTopicQuery>(
         GetSubredditByTopicDocument,
         {
@@ -168,8 +81,7 @@ function Postbox({ subreddit }: Props) {
       setValue("subreddit", "");
 
       toast.success("Post created!", { id: notification });
-    } catch (error) {
-      console.log("error", error);
+    } catch (_error) {
       toast.error("Error creating post!", { id: notification });
     }
   });
