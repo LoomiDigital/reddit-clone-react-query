@@ -8,10 +8,11 @@ export const useAddVote = (votes: [Vote], username: string) => {
   const [vote, setVote] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const userVote = votes?.find((vote) => vote?.username === username)?.upvote;
+    const userVote = votes?.find((vote) => vote?.username === username)
+      ?.upvote!;
 
-    setVote(userVote!);
-  }, [votes, username, setVote]);
+    setVote(userVote);
+  }, [votes, username]);
 
   useEffect(() => {
     const totalVotes = votes?.reduce(
@@ -20,7 +21,7 @@ export const useAddVote = (votes: [Vote], username: string) => {
     );
 
     setDisplayVotes(totalVotes!);
-  }, [votes, setDisplayVotes]);
+  }, [votes]);
 
   const { mutateAsync: updateVote } = useUpdateVoteMutation(client, {
     onMutate: async (variables) => {
