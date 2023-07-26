@@ -40,7 +40,7 @@ export const mockPostResponse = {
 export const mockPost: PostAttributesFragment = {
   __typename: "Post",
   id: 1,
-  title: "Test Post",
+  title: "This is a test post",
   body: "Test Content",
   image: "http://placehold.it/300x300",
   username: "Buck",
