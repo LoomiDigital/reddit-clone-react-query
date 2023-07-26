@@ -57,7 +57,7 @@ describe("PostCard component", () => {
       </SessionProvider>
     );
 
-    expect(getByText("Test Post")).toBeInTheDocument();
+    expect(getByText("This is a test post")).toBeInTheDocument();
   });
 
   it("should handle an upvote", async () => {
