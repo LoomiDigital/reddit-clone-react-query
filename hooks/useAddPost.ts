@@ -26,6 +26,8 @@ export const useAddPost = (subreddit?: string) => {
       })
     : useGetPostsQuery.getKey();
 
+  const getPostsQuery = subreddit ? "postsByTopic" : "posts";
+
   const { mutateAsync: addSubreddit } =
     useAddSubredditMutation<AddSubredditMutation>(client);
 
@@ -33,8 +35,6 @@ export const useAddPost = (subreddit?: string) => {
 
   const { mutateAsync: addPost } = useAddPostMutation<AddPostMutation>(client, {
     onMutate: async (post) => {
-      const getPostsQuery = subreddit ? "postsByTopic" : "posts";
-
       await queryClient.cancelQueries(getPosts);
 
       const previousPosts = queryClient.getQueryData<
@@ -77,12 +77,10 @@ export const useAddPost = (subreddit?: string) => {
 
       return previousPosts;
     },
-    onError: (_err, _variables, context) => {
-      const { posts } = context as GetPostsQuery & GetPostsByTopicQuery;
-
+    onError: () => {
       queryClient.setQueryData<
-        (GetPostsQuery & GetPostsByTopicQuery) | unknown
-      >(getPosts, posts);
+        (GetPostsQuery & GetPostsByTopicQuery) | undefined
+      >(getPosts, (old) => old);
     },
     onSuccess: (data) => {
       addVote({
