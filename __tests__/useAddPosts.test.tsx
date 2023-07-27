@@ -11,7 +11,7 @@ import {
 
 import { useAddPost } from "@d20/hooks/useAddPost";
 import { mockPost } from "@d20/mocks/getPost";
-import { mockPosts, mockPostsByQuery } from "@d20/mocks/getPosts";
+import { mockPosts, mockPostsByTopicQuery } from "@d20/mocks/getPosts";
 
 import { renderWithClient } from "@d20/utils/testUtils";
 
@@ -133,7 +133,7 @@ describe("useAddPost hook", () => {
 
     queryClient.setQueryData(
       useGetPostsByTopicQuery.getKey({ topic: "testSub" }),
-      mockPostsByQuery
+      mockPostsByTopicQuery
     );
 
     const { getByText } = renderWithClient(
