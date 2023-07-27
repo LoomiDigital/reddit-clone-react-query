@@ -64,7 +64,7 @@ export const mockPosts: GetPostsQuery = {
   },
 };
 
-export const mockPostsByQuery: GetPostsByTopicQuery = {
+export const mockPostsByTopicQuery: GetPostsByTopicQuery = {
   postsByTopic: {
     __typename: "PostConnection",
     edges: [
