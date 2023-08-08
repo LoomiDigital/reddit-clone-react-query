@@ -8,20 +8,18 @@ export const useAddVote = (votes: [Vote], username: string) => {
   const [vote, setVote] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const userVote = votes?.find((vote) => vote?.username === username)
-      ?.upvote!;
-
-    setVote(userVote);
-  }, [votes, username]);
-
-  useEffect(() => {
     const totalVotes = votes?.reduce(
       (total, vote) => (vote?.upvote ? ++total : --total),
       0
     );
 
     setDisplayVotes(totalVotes!);
-  }, [votes]);
+
+    const userVote = votes?.find((vote) => vote?.username === username)
+      ?.upvote!;
+
+    setVote(userVote);
+  }, [votes, username]);
 
   const { mutateAsync: updateVote } = useUpdateVoteMutation(client, {
     onMutate: async (variables) => {
