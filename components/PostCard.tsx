@@ -1,11 +1,11 @@
 import { SyntheticEvent, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import Router from "next/router";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 
 import { PostAttributesFragment, Vote } from "@d20/generated/graphql";
 
-import { useGetComments } from "@d20/hooks/useGetComments";
+import { useComments } from "@d20/hooks/useComments";
 import { useAddVote } from "@d20/hooks/useAddVote";
 
 import {
@@ -27,17 +27,13 @@ interface Props {
 
 function PostCard({ post }: Props) {
   const [hasMounted, setHasMounted] = useState<boolean>(false);
-
   const { data: session } = useSession();
-
-  const { commentsData, isLoading } = useGetComments(post.id);
 
   const { updateVote, displayVotes, vote } = useAddVote(
     post?.votes as [Vote],
     session?.user?.name!
   );
-
-  const comments = commentsData?.commentsByPostId;
+  const { comments, isLoading } = useComments(post);
 
   useEffect(() => {
     setHasMounted(true);
