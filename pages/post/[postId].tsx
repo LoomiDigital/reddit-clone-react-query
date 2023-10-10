@@ -3,11 +3,7 @@ import { useSearchParams } from "next/navigation";
 import { QueryClient, dehydrate } from "@tanstack/react-query";
 
 import client from "@d20/react-query/client";
-import {
-  GetPostQuery,
-  PostAttributesFragment,
-  useGetPostQuery,
-} from "@d20/generated/graphql";
+import { GetPostQuery, useGetPostQuery } from "@d20/generated/graphql";
 
 import { useGetPost } from "@d20/hooks/useGetPost";
 
@@ -18,8 +14,7 @@ function PostPage() {
   const searchParams = useSearchParams();
 
   const postId = parseInt(searchParams.get("postId")!);
-  const { postData } = useGetPost(postId);
-  const post: PostAttributesFragment = postData?.getPost!;
+  const { post } = useGetPost(postId);
 
   return (
     <div className="mx-auto my-7 max-w-5xl">
