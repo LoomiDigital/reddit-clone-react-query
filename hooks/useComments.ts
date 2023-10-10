@@ -81,7 +81,6 @@ export const useComments = (post: PostAttributesFragment) => {
     useAddCommentMutation<AddCommentMutation>(client);
 
   return {
-    addComment,
     setOptimisticRender,
     submitComment,
     register,
