@@ -5,19 +5,17 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { mockPost } from "@d20/mocks/getPost";
 import { mockComments } from "@d20/mocks/getComments";
 
-import { useGetComments } from "@d20/hooks/useGetComments";
+import { useComments } from "@d20/hooks/useComments";
 import { useAddVote } from "@d20/hooks/useAddVote";
 
 import PostCard from "@d20/components/PostCard";
 
-jest.mock("@d20/hooks/useGetComments");
+jest.mock("@d20/hooks/useComments");
 jest.mock("@d20/hooks/useAddVote");
 
 const queryClient = new QueryClient();
 
-const mockUseGetComments = useGetComments as jest.MockedFunction<
-  typeof useGetComments
->;
+const mockUseComments = useComments as jest.MockedFunction<typeof useComments>;
 
 const mockUseAddVote = useAddVote as jest.MockedFunction<typeof useAddVote>;
 
@@ -27,8 +25,9 @@ const mockVoteResponse = {
   vote: true,
 };
 
-mockUseGetComments.mockReturnValue({
-  commentsData: mockComments,
+mockUseComments.mockReturnValue({
+  ...jest.requireActual("@d20/hooks/useComments"),
+  comments: mockComments?.commentsByPostId,
   isLoading: false,
 });
 
