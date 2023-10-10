@@ -22,12 +22,12 @@ jest.mock("@d20/components/CommentCard");
 const mockGetPost = useGetPost as jest.MockedFunction<typeof useGetPost>;
 const queryClient = new QueryClient();
 
-describe("Post component", () => {
-  mockGetPost.mockImplementation(() => ({
-    postData: { getPost: mockPost },
-    isLoading: false,
-  }));
+mockGetPost.mockReturnValue({
+  post: mockPost,
+  isLoading: false,
+});
 
+describe("Post component", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });

@@ -1,11 +1,8 @@
-import { useState } from "react";
 import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
-import useInfiniteScroll from "react-infinite-scroll-hook";
+import { QueryClient, dehydrate } from "@tanstack/react-query";
 
-import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
 import client from "@d20/react-query/client";
-
 import { GetPostsQuery, useGetPostsQuery } from "@d20/generated/graphql";
 import { useGetPosts } from "@d20/hooks/useGetPosts";
 
@@ -13,46 +10,9 @@ import Feed from "@d20/components/Feed";
 import Postbox from "@d20/components/Postbox";
 
 const Home: NextPage = () => {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const queryClient = useQueryClient();
-
   const NUMBER_OF_POSTS = 4;
-
-  const { posts, fetchMore } = useGetPosts(NUMBER_OF_POSTS);
-
-  const hasNextPage: boolean = posts?.pageInfo?.hasNextPage!;
-
-  const loadItems = async () => {
-    const { fetchedPosts } = await fetchMore(
-      NUMBER_OF_POSTS,
-      posts?.pageInfo?.endCursor
-    );
-
-    queryClient.setQueryData<GetPostsQuery | undefined>(
-      useGetPostsQuery.getKey(),
-      {
-        posts: {
-          edges: [...posts?.edges!, ...fetchedPosts?.edges!],
-          pageInfo: {
-            ...fetchedPosts?.pageInfo,
-            ...fetchedPosts?.pageInfo!,
-          },
-        },
-      }
-    );
-
-    setIsLoading(false);
-  };
-
-  const handleLoadMore = async () => {
-    hasNextPage && loadItems();
-  };
-
-  const [sentryRef] = useInfiniteScroll({
-    hasNextPage,
-    loading: isLoading,
-    onLoadMore: handleLoadMore,
-  });
+  const { posts, hasNextPage, isLoading, sentryRef } =
+    useGetPosts(NUMBER_OF_POSTS);
 
   return (
     <div className="mx-auto my-7 max-w-5xl">

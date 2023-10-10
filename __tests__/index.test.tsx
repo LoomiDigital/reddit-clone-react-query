@@ -18,6 +18,7 @@ const queryClient = new QueryClient();
 describe("The index page", () => {
   it("should render the feed component when post data is returned", async () => {
     mockGetPosts.mockReturnValue({
+      ...jest.requireActual("@d20/hooks/useGetPosts"),
       posts: mockPosts.posts as PostConnection,
       fetchMore: jest.fn(),
     });

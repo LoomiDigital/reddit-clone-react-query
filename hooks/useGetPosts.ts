@@ -1,4 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import useInfiniteScroll from "react-infinite-scroll-hook";
+
+import client from "@d20/react-query/client";
 
 import {
   GetPostsByTopicDocument,
@@ -10,9 +14,10 @@ import {
   useGetPostsQuery,
 } from "@d20/generated/graphql";
 
-import client from "@d20/react-query/client";
-
 export const useGetPosts = (first: number, topic?: string) => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const queryClient = useQueryClient();
+
   const postsQuery = topic
     ? useGetPostsByTopicQuery.getKey({
         topic,
@@ -27,6 +32,9 @@ export const useGetPosts = (first: number, topic?: string) => {
     postsQuery,
     postsFetch
   );
+
+  const posts =
+    (data?.postsByTopic as PostConnection) || (data?.posts as PostConnection);
 
   const fetchMore = async (first: number, after: string, topic?: string) => {
     const postsQuery = topic ? GetPostsByTopicDocument : GetPostsDocument;
@@ -46,9 +54,42 @@ export const useGetPosts = (first: number, topic?: string) => {
     };
   };
 
+  const hasNextPage: boolean = posts?.pageInfo?.hasNextPage!;
+
+  const loadItems = async () => {
+    const { fetchedPosts } = await fetchMore(first, posts?.pageInfo?.endCursor);
+
+    queryClient.setQueryData<GetPostsQuery | undefined>(
+      useGetPostsQuery.getKey(),
+      {
+        posts: {
+          edges: [...posts?.edges!, ...fetchedPosts?.edges!],
+          pageInfo: {
+            ...fetchedPosts?.pageInfo,
+            ...fetchedPosts?.pageInfo!,
+          },
+        },
+      }
+    );
+
+    setIsLoading(false);
+  };
+
+  const handleLoadMore = async () => {
+    hasNextPage && loadItems();
+  };
+
+  const [sentryRef] = useInfiniteScroll({
+    hasNextPage,
+    loading: isLoading,
+    onLoadMore: handleLoadMore,
+  });
+
   return {
-    posts:
-      (data?.postsByTopic as PostConnection) || (data?.posts as PostConnection),
     fetchMore,
+    sentryRef,
+    posts,
+    hasNextPage,
+    isLoading,
   };
 };
